@@ -161,7 +161,7 @@ class img2geo:
         # offset_y -= self.altitude * math.tan(tilt_angle_rad)
         print ('offset_x: ', offset_x)
         print ('offset_y: ', offset_y)
-
+        print ('heading :', heading_rad)
         # Rotate the offsets based on the heading angle
         rotated_x = offset_x * math.cos(heading_rad) - offset_y * math.sin(heading_rad)
         rotated_y = offset_x * math.sin(heading_rad) + offset_y * math.cos(heading_rad)
