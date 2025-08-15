@@ -57,4 +57,12 @@ def generate_box_ouput(image, center_x: float, center_y: float,
         
         cv2.putText(image, text, (text_x, text_y), 
                     cv2.FONT_HERSHEY_SIMPLEX, font_scale, text_color, 1, cv2.LINE_AA)
+    image_height, image_width = image.shape[:2]
+    center_img_x = image_width // 2
+    center_img_y = image_height // 2
+    line_color = (200, 200, 200)  # เทาอ่อน
+    line_thickness = 1
+
+    cv2.line(image, (center_img_x, 0), (center_img_x, image_height), line_color, line_thickness)
+    cv2.line(image, (0, center_img_y), (image_width, center_img_y), line_color, line_thickness)
     return image

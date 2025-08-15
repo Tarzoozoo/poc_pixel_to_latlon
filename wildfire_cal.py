@@ -3,14 +3,12 @@ from typing import Tuple
 import numpy as np
 from dataclasses import dataclass
 
-
 @dataclass
 class bboxInfo:
     Xmax: float
     Ymax: float
     Xmin: float
     Ymin: float
-
 
 @dataclass
 class pointInfo:
@@ -22,7 +20,6 @@ class pointInfo:
     size: float = 0.0
     distance: float = 0.0
 
-
 class img2geo:
     def __init__(
         self,
@@ -31,11 +28,11 @@ class img2geo:
         fov_width: float,
         fov_height: float,
         altitude: float,
-        tilt_angle: float,  # Pitch camera
-        heading: float,  # Yaw drone + camera
+        tilt_angle: float,  # Total Pitch
+        heading: float,  # Total Yaw
         camera_lat: float,
         camera_lng: float,
-        station_lat: float = 17.083783116300882,
+        station_lat: float = 17.083783116300882, 
         station_lng: float = 102.70642427905587,
     ):
         self.image_width = image_width
@@ -61,34 +58,36 @@ class img2geo:
         self, pixel_x: int, pixel_y: int
     ) -> Tuple[float, float]:
 
-        # Convert angles to radians
         fov_width_rad = math.radians(self.fov_width)
         fov_height_rad = math.radians(self.fov_height)
         tilt_angle_rad = math.radians(self.tilt_angle)
         heading_rad = math.radians(self.heading)
 
-        # Calculate the ground dimensions of the image
+        # Calculate the ground dimensions of the image (meter)
         ground_width = 2 * self.altitude * math.tan(fov_width_rad / 2)
         ground_height = 2 * self.altitude * math.tan(fov_height_rad / 2)
         
-        # Calculate the pixel size on the ground
+        # Calculate the pixel size on the ground (meter)
         pixel_size_x = ground_width / self.image_width
         pixel_size_y = ground_height / self.image_height
 
         # Calculate the offset of the pixel from the image center
         offset_x = (pixel_x - self.image_width / 2) * pixel_size_x
-        # offset_y = (pixel_y - self.image_height / 2) * pixel_size_y
         offset_y = -(pixel_y - self.image_height / 2) * pixel_size_y # Convert image coordinate to LAT/LON coordinate
 
-        # Adjust for tilt angle
+        # TODO: Adjust for tilt angle
         offset_y += self.altitude * math.tan(tilt_angle_rad)
-        # offset_y -= self.altitude * math.tan(tilt_angle_rad)
 
-        # Rotate the offsets based on the heading angle
-        rotated_x = offset_x * math.cos(heading_rad) + offset_y * math.sin(heading_rad)
-        rotated_y = -offset_x * math.sin(heading_rad) + offset_y * math.cos(heading_rad)
-        print (f'{rotated_x}, {rotated_y}')
-        # Convert ground offsets to latitude and longitude
+        # TODO: Rotate the offsets based on the heading angle
+        R = np.array([
+            [math.cos(heading_rad), math.sin(heading_rad)],
+            [-math.sin(heading_rad), math.cos(heading_rad)]
+        ])
+        offset_vec = np.array([offset_x, offset_y])
+        rotate_vec = R @ offset_vec
+        rotated_x, rotated_y = rotate_vec
+
+        # Convert ground offsets to latitude and longitude (degrees)
         earth_radius = 6378137  # Earth's radius in meters
         delta_lat = (rotated_y / earth_radius) * (180 / math.pi)
         delta_lng = (

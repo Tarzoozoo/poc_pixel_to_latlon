@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from typing import List, Tuple
 
-def detect_red_rectangles(image_path: str) -> List[List[int]]:
+def detect_red_rectangles(image_path: str, debug: bool = False) -> List[List[int]]:
     """
     ตรวจจับกรอบสี่เหลี่ยมสีแดงจากรูป และคืนค่า bounding box
     
@@ -19,15 +19,16 @@ def detect_red_rectangles(image_path: str) -> List[List[int]]:
         print("ไม่สามารถอ่านไฟล์รูปภาพได้")
         return []
     
-    
+    original = image.copy()
+
     # แปลงจาก BGR เป็น HSV เพื่อใช้ในการหาสีแดง
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     
     # กำหนดช่วงสีแดงใน HSV
     # สีแดงอยู่ในช่วง 0-10 และ 160-180 ใน H channel
-    lower_red1 = np.array([0, 50, 50])
+    lower_red1 = np.array([0, 100, 100])
     upper_red1 = np.array([10, 255, 255])
-    lower_red2 = np.array([160, 50, 50])
+    lower_red2 = np.array([160, 100, 100])
     upper_red2 = np.array([180, 255, 255])
     
     # สร้าง mask สำหรับสีแดง
@@ -65,7 +66,22 @@ def detect_red_rectangles(image_path: str) -> List[List[int]]:
             ymin = y
             
             rectangles.append([xmax, ymax, xmin, ymin])
-    
+        if debug:
+            # วาดกรอบบนรูปต้นฉบับ
+            cv2.rectangle(original, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
+            # ใส่ข้อความ bbox
+            cv2.putText(original, f"[{xmax},{ymax},{xmin},{ymin}]", 
+                       (xmin, ymin-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+            
+    if debug:
+        try:
+            # แสดงรูปผลลัพธ์
+            cv2.imshow('Original with Detection', original)
+            cv2.imshow('Red Mask', red_mask)
+            cv2.waitKey(0)
+        finally:
+            cv2.destroyAllWindows()
+
     return rectangles
 
 def detect_red_rectangles_advanced(image_path: str, debug: bool = False) -> List[List[int]]:
@@ -103,10 +119,10 @@ def detect_red_rectangles_advanced(image_path: str, debug: bool = False) -> List
     red_mask = mask1 + mask2
     
     # ทำ morphological operations เพื่อปรับปรุง mask
-    kernel = np.ones((3, 3), np.uint8)
-    red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel)
-    red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, kernel)
-    
+    kernel = np.ones((2, 2), np.uint8)
+    red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel, iterations=2)
+    red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, kernel, iterations=1)
+
     # หา contours
     contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
@@ -115,9 +131,9 @@ def detect_red_rectangles_advanced(image_path: str, debug: bool = False) -> List
     for contour in contours:
         area = cv2.contourArea(contour)
         perimeter = cv2.arcLength(contour, True)
-        
+        print (f'Area: ', area)
         # กรองตาม area และ perimeter
-        if area < 500 or perimeter < 100:
+        if area < 750 or perimeter < 200:
             continue
         
         # หา bounding rectangle
@@ -125,7 +141,7 @@ def detect_red_rectangles_advanced(image_path: str, debug: bool = False) -> List
         
         # ตรวจสอบ aspect ratio
         aspect_ratio = float(w) / h
-        if not (0.1 < aspect_ratio < 10.0):
+        if not (0.3 < aspect_ratio < 3.0):
             continue
         
         # ตรวจสอบว่า contour เป็นสี่เหลี่ยมหรือไม่
@@ -170,14 +186,14 @@ def process_image_and_print_results(image_path: str):
     print(f"กำลังประมวลผลรูปภาพ: {image_path}")
     
     # ใช้ฟังก์ชันพื้นฐาน
-    basic_results = detect_red_rectangles(image_path)
+    basic_results = detect_red_rectangles(image_path, debug=True)
     print(f"\nผลลัพธ์จากฟังก์ชันพื้นฐาน:")
     print(f"พบกรอบสี่เหลี่ยมสีแดง {len(basic_results)} กรอบ")
     for i, bbox in enumerate(basic_results):
         print(f"กรอบที่ {i+1}: [Xmax={bbox[0]}, Ymax={bbox[1]}, Xmin={bbox[2]}, Ymin={bbox[3]}]")
     
     # ใช้ฟังก์ชันขั้นสูง
-    advanced_results = detect_red_rectangles_advanced(image_path)
+    advanced_results = detect_red_rectangles_advanced(image_path, debug=True)
     print(f"\nผลลัพธ์จากฟังก์ชันขั้นสูง:")
     print(f"พบกรอบสี่เหลี่ยมสีแดง {len(advanced_results)} กรอบ")
     for i, bbox in enumerate(advanced_results):
@@ -188,7 +204,7 @@ def process_image_and_print_results(image_path: str):
 # ตัวอย่างการใช้งาน
 if __name__ == "__main__":
     # เปลี่ยน path นี้เป็นไฟล์รูปภาพของคุณ
-    image_path = "your_image.jpg"
+    image_path = "test.jpg"
     
     try:
         results = process_image_and_print_results(image_path)

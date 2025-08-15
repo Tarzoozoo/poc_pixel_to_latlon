@@ -37,45 +37,41 @@ def draw_bbox_with_coordinates(image_path: str, config_path: str = "config.json"
         ALTITUDE, TOTAL_PITCH, TOTAL_HEADING, CAM_LAT, CAM_LNG
     )
 
-    # อ่านรูปภาพ
     image = cv2.imread(image_path)
     if image is None:
         print(f"ไม่สามารถอ่านไฟล์รูปภาพ: {image_path}")
         return
 
-    # ตรวจจับกรอบสี่เหลี่ยมสีแดง
+    # Box detection
     print(f'Camera input: Lat={CAM_LAT:.6f}, Lng={CAM_LNG:.6f}')
     print(f'Image size: {IMAGE_WIDTH}x{IMAGE_HEIGHT}')
     print(f'Center Image: {IMAGE_WIDTH/2}x{IMAGE_HEIGHT/2}')
     print("Detecting red rectangles...")
-    
-    rectangles = detect_red_rectangles_advanced(image_path)
+
+    rectangles = detect_red_rectangles(image_path)
     print(f"Found {len(rectangles)} red rectangles")
     if not rectangles:
         print("ไม่พบกรอบสี่เหลี่ยมสีแดง")
         return
     
+    # Convert pixel to lat/lon
     for i, bbox in enumerate(rectangles):
         xmax, ymax, xmin, ymin = bbox
         
-        # คำนวณพิกัดกลางกรอบ
         center_x = (xmax + xmin) / 2
         center_y = (ymax + ymin) / 2
-        
-        # แปลงพิกัด pixel เป็น lat/lng
-        info = imggeo.get_bbox_info(bbox)
-        
         print(f"\n=== Box {i+1} ===")
         print(f"BBox: [Xmax={xmax}, Ymax={ymax}, Xmin={xmin}, Ymin={ymin}]")
         print(f"Center pixel: ({center_x:.1f}, {center_y:.1f})")
+
+        info = imggeo.get_bbox_info(bbox)
         print(f"Output: Lat={info.lat:.8f}, Lng={info.lng:.8f}")
 
-        # วาดกรอบและข้อมูลบนรูป
+        # Draw box output on image
         image = generate_box_ouput(image, center_x, center_y, 
                                         xmax, xmin, ymax, ymin, 
                                         info, IMAGE_WIDTH, i)
     
-    # บันทึกรูปผลลัพธ์
     success = cv2.imwrite(output_path, image)
     if success:
         print(f"\n✅ บันทึกรูปผลลัพธ์แล้ว: {output_path}")
@@ -86,9 +82,9 @@ if __name__ == "__main__":
     print("🔍 เริ่มต้นการวิเคราะห์รูปภาพ...")
     try:
         draw_bbox_with_coordinates(
-            image_path="test.png",           # รูปภาพต้นฉบับ
-            config_path="config.json",       # ไฟล์ config
-            output_path="result_with_coords.jpg"  # รูปผลลัพธ์
+            image_path="test.jpg",
+            config_path="config.json",
+            output_path="result_with_coords.jpg"
         )
     except Exception as e:
         print(f"Error with config method: {e}")
