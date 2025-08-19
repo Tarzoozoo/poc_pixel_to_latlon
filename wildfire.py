@@ -83,8 +83,26 @@ if __name__ == "__main__":
     try:
         draw_bbox_with_coordinates(
             image_path="test.jpg",
-            config_path="config.json",
-            output_path="result_with_coords.jpg"
+            config_path="config/config.json",
+            output_path="result/result_with_coords.jpg"
         )
+
+        # draw_bbox_with_coordinates(
+        #     image_path="test_rotated_cw_90.jpg",
+        #     config_path="config/config_cw_90.json",
+        #     output_path="result/result_with_coords_rotated_cw_90.jpg"
+        # )
+
+        # draw_bbox_with_coordinates(
+        #     image_path="test_rotated_cw_45.jpg",
+        #     config_path="config/config_cw_45.json",
+        #     output_path="result/result_with_coords_rotated_cw_45.jpg"
+        # )
+
+        # draw_bbox_with_coordinates(
+        #     image_path="test_rotated_ccw_90.jpg",
+        #     config_path="config/config_ccw_90.json",
+        #     output_path="result/result_with_coords_rotated_ccw_90.jpg"
+        # )
     except Exception as e:
         print(f"Error with config method: {e}")
