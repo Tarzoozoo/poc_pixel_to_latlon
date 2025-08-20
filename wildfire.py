@@ -1,5 +1,6 @@
 import json
 import cv2
+import csv
 from wildfire_cal import img2geo
 from wildfire_box_detect import detect_red_rectangles, detect_red_rectangles_advanced
 from wildfire_box_output import generate_box_ouput
@@ -25,7 +26,8 @@ def get_camera_gps(config):
     return gps["lat_deg"], gps["lon_deg"], gps["alt_m"]
 
 def draw_bbox_with_coordinates(image_path: str, config_path: str = "config.json", 
-                              output_path: str = "output_with_coordinates.jpg"):
+                              output_path: str = "output_with_coordinates.jpg", 
+                              csv_output_path: str = "output_coordinates.csv"):
     
     config = load_config(config_path)
     IMAGE_WIDTH, IMAGE_HEIGHT, FOV_WIDTH, FOV_HEIGHT = get_image_dimensions(config)
@@ -54,6 +56,8 @@ def draw_bbox_with_coordinates(image_path: str, config_path: str = "config.json"
         print("ไม่พบกรอบสี่เหลี่ยมสีแดง")
         return
     
+    csv_data = [["Detected box", "Pixel X", "Pixel Y", "Lat", "Lon"]]
+
     # Convert pixel to lat/lon
     for i, bbox in enumerate(rectangles):
         xmax, ymax, xmin, ymin = bbox
@@ -67,6 +71,14 @@ def draw_bbox_with_coordinates(image_path: str, config_path: str = "config.json"
         info = imggeo.get_bbox_info(bbox)
         print(f"Output: Lat={info.lat:.8f}, Lng={info.lng:.8f}")
 
+        csv_data.append([
+            f"Box {i+1}",
+            round(center_x, 2),
+            round(center_y, 2),
+            round(info.lat, 8),
+            round(info.lng, 8)
+        ])
+
         # Draw box output on image
         image = generate_box_ouput(image, center_x, center_y, 
                                         xmax, xmin, ymax, ymin, 
@@ -78,13 +90,22 @@ def draw_bbox_with_coordinates(image_path: str, config_path: str = "config.json"
     else:
         print(f"\n❌ ไม่สามารถบันทึกรูปได้: {output_path}")
 
+    try:
+        with open(csv_output_path, mode='w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerows(csv_data)
+        print(f"\n✅ บันทึก CSV แล้ว: {csv_output_path}")
+    except Exception as e:
+        print(f"\n❌ ไม่สามารถบันทึก CSV ได้: {e}")
+
 if __name__ == "__main__":
     print("🔍 เริ่มต้นการวิเคราะห์รูปภาพ...")
     try:
         draw_bbox_with_coordinates(
             image_path="test.jpg",
             config_path="config/config.json",
-            output_path="result/result_with_coords.jpg"
+            output_path="result/result_with_coords.jpg",
+            csv_output_path="result/csv/result_with_coords.csv"
         )
 
         # draw_bbox_with_coordinates(
