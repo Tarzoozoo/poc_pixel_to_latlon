@@ -1,0 +1,25 @@
+{
+  "image": {
+    "width_px": 1569,
+    "height_px": 889,
+    "horizontal_fov_deg": 59.68,
+    "vertical_fov_deg": 35.76
+  },
+  "telemetry": {
+    "center_gps": {
+      "lat_deg": 13.757170,
+      "lon_deg": 100.501977,
+      "alt_m": 125.0
+    },
+    "drone_attitude_deg": {
+      "yaw": 90.0,
+      "pitch": 0.0,
+      "roll": 0.0
+    },
+    "camera_mount_deg": {
+      "yaw": 0.0,
+      "pitch": 0.0,
+      "roll": 0.0
+    }
+  }
+}

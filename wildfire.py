@@ -1,3 +1,6 @@
+import sys
+import argparse
+import os
 import json
 import cv2
 import csv
@@ -99,13 +102,25 @@ def draw_bbox_with_coordinates(image_path: str, config_path: str = "config.json"
         print(f"\n❌ ไม่สามารถบันทึก CSV ได้: {e}")
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Draw bounding boxes with coordinates")
+    parser.add_argument("folder")
+    parser.add_argument("filename")
+    args = parser.parse_args()
+
+    folder = args.folder
+    filename = args.filename
     print("🔍 เริ่มต้นการวิเคราะห์รูปภาพ...")
     try:
+        image_path = os.path.join(folder, f"{filename}.jpg")
+        config_path = os.path.join(folder, "config", f"config_{filename}.json")
+        output_path = os.path.join(folder, "result", f"result_{filename}.jpg")
+        csv_output_path = os.path.join(folder, "result", f"result_{filename}.csv")
+
         draw_bbox_with_coordinates(
-            image_path="test.jpg",
-            config_path="config/config.json",
-            output_path="result/result_with_coords.jpg",
-            csv_output_path="result/csv/result_with_coords.csv"
+            image_path=image_path,
+            config_path=config_path,
+            output_path=output_path,
+            csv_output_path=csv_output_path
         )
 
         # draw_bbox_with_coordinates(
