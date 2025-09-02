@@ -53,7 +53,31 @@ class img2geo:
         center_x = (bbox.Xmax + bbox.Xmin) / 2  # pixel X
         center_y = (bbox.Ymax + bbox.Ymin) / 2  # pixel Y
         return center_x, center_y
+    
+    def __distance(self, lat, lng):
+        """
+        Calculate the distance between two geographical points using the Haversine formula.
 
+        Args:
+            lat (float): Latitude of the point.
+            lon (float): Longitude of the point.
+
+        Returns:
+            float: Distance in meters between the two points.
+        """
+        from math import radians, sin, cos, sqrt, atan2
+
+        R = 6371000
+        phi1 = radians(self.station_lat)
+        phi2 = radians(lat)
+        delta_phi = radians(lat - self.station_lat)
+        delta_lambda = radians(lng - self.station_lng)
+
+        a = sin(delta_phi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(delta_lambda / 2) ** 2
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        return R * c
+    
     def __pixel_to_lat_lng_with_tilt(
         self, pixel_x: int, pixel_y: int
     ) -> Tuple[float, float]:
@@ -97,7 +121,7 @@ class img2geo:
         pixel_lat = self.camera_lat + delta_lat
         pixel_lng = self.camera_lng + delta_lng
 
-        return pixel_lat, pixel_lng
+        return pixel_lat, pixel_lng, ground_width, ground_height
 
 
     def get_bbox_info(self, bbox) -> pointInfo:
@@ -107,7 +131,9 @@ class img2geo:
         )
 
         center_x, center_y = self.__center(point_info.bbox)
-        point_info.lat, point_info.lng = self.__pixel_to_lat_lng_with_tilt(
+        point_info.lat, point_info.lng, point_info.width, point_info.height = self.__pixel_to_lat_lng_with_tilt(
             center_x, center_y
         )
+        point_info.size = point_info.width * point_info.height
+        point_info.distance = self.__distance(point_info.lat, point_info.lng)
         return point_info
